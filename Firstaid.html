@@ -1,1 +1,128 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#e63946" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <title>QuickAid - First Aid Help</title>
+</head><body>
+  <div class="app">
+    <header>
+      <h1>🚑 QuickAid</h1>
+      <p>Get instant step-by-step first aid help</p>
+    </header><input type="text" id="search" placeholder="Search emergency (e.g., burn, cut)..." />
 
+<div id="emergency-list"></div>
+
+<footer>
+  <button onclick="startQuiz()">🧠 Teach First-Aid</button>
+</footer>
+
+  </div>  <div id="quiz-modal" class="hidden">
+    <div class="modal-content">
+      <h2>First-Aid Quiz</h2>
+      <p id="quiz-question"></p>
+      <div id="quiz-options"></div>
+      <button onclick="closeQuiz()">Close</button>
+    </div>
+  </div>  <script>
+    const emergencies = {
+      "burn": [
+        "Cool the burn under running water for 10-20 minutes.",
+        "Remove tight items from the burned area.",
+        "Do not pop blisters.",
+        "Cover with sterile, non-stick dressing."
+      ],
+      "cut": [
+        "Apply pressure to stop bleeding.",
+        "Clean the wound with clean water.",
+        "Apply antiseptic and cover with a bandage.",
+        "Seek medical attention if deep or bleeding doesn't stop."
+      ],
+      "choking": [
+        "Ask: Are you choking? Can you speak?",
+        "Give 5 back blows between the shoulder blades.",
+        "Give 5 abdominal thrusts (Heimlich maneuver).",
+        "Repeat until item is dislodged or help arrives."
+      ]
+    };
+
+    const questions = [
+      {
+        q: "What should you do first for a burn?",
+        options: ["Apply ice", "Cool under water", "Pop blisters"],
+        answer: 1
+      },
+      {
+        q: "How to treat a minor cut?",
+        options: ["Cover immediately", "Clean with dirty cloth", "Apply pressure first"],
+        answer: 2
+      }
+    ];
+
+    const list = document.getElementById("emergency-list");
+    const search = document.getElementById("search");
+    search.addEventListener("input", () => {
+      const term = search.value.toLowerCase();
+      list.innerHTML = "";
+      Object.keys(emergencies).forEach(key => {
+        if (key.includes(term)) {
+          const steps = emergencies[key].map(s => `<li>${s}</li>`).join("");
+          list.innerHTML += `
+            <div class="card">
+              <h3>${key.charAt(0).toUpperCase() + key.slice(1)}</h3>
+              <ol>${steps}</ol>
+              <button onclick="shareSteps('${key}')">🔗 Share</button>
+            </div>
+          `;
+        }
+      });
+    });
+
+    function shareSteps(key) {
+      const text = `First-Aid Steps for ${key.toUpperCase()}:\n\n${emergencies[key].join("\n")}`;
+      if (navigator.share) {
+        navigator.share({ title: "QuickAid First-Aid", text });
+      } else {
+        alert(text);
+      }
+    }
+
+    // Quiz
+    let currentQ = 0;
+    function startQuiz() {
+      currentQ = 0;
+      document.getElementById("quiz-modal").classList.remove("hidden");
+      loadQuiz();
+    }
+
+    function loadQuiz() {
+      const q = questions[currentQ];
+      document.getElementById("quiz-question").innerText = q.q;
+      const optionsDiv = document.getElementById("quiz-options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => {
+          if (i === q.answer) alert("✅ Correct!");
+          else alert("❌ Wrong answer");
+          currentQ = (currentQ + 1) % questions.length;
+          loadQuiz();
+        };
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function closeQuiz() {
+      document.getElementById("quiz-modal").classList.add("hidden");
+    }
+  </script>  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registered:', reg.scope))
+          .catch(err => console.error('Service Worker failed:', err));
+      });
+    }
+  </script></body></html>
